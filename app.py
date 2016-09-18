@@ -1,5 +1,7 @@
 #!/usr/bin/python
+from __future__ import print_function
 from flask import Flask, jsonify, abort, make_response, request, url_for
+
 import time
 import sys
 import sqlite3
@@ -93,6 +95,11 @@ def __get_days():
         return daysData
     except sqlite3.IntegrityError:
         print('ERROR: db exists')
+        
+def __switch_led():
+    print("Led will be switched ", file=sys.stderr)
+    status = 1
+    return status
 ## AUTH STUFF ###
 
 @auth.get_password
@@ -157,3 +164,8 @@ def get_day(day_no):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
+
+@app.route('/controller/api/v1/led', methods=['POST'])    
+def switch_led():
+    #return status of led switch_led
+    return jsonify({'status': __switch_led()})
