@@ -45,6 +45,7 @@ sqlite_file = '../../pi/Temperature/temp_db.sqlite'
 
 
 def __get_readings(start_num = 0, len = 100):
+    print("Provided readings", file=sys.stderr)
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
     try:
@@ -71,6 +72,7 @@ def __get_readings(start_num = 0, len = 100):
 
 #for now it always gets last 10 days
 def __get_days():
+    print("Provided days", file=sys.stderr)
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
     daysData = []
@@ -95,11 +97,19 @@ def __get_days():
         return daysData
     except sqlite3.IntegrityError:
         print('ERROR: db exists')
-        
+
 def __switch_led():
     print("Led will be switched ", file=sys.stderr)
     status = 1
     return status
+
+def __led_status():
+    print("Led status", file= sys.stderr)
+    return 1
+
+#TODO:
+def __print_conn_hw():
+    return 1
 ## AUTH STUFF ###
 
 @auth.get_password
@@ -162,10 +172,28 @@ def get_day(day_no):
         abort(404)
     return jsonify({'day': days[day_no - 1]})
 
+@app.route('controller/api/v1/connected-hardware', methods=['GET','POST'])
+def hardware():
+    if request.method == 'POST':
+        pass
+    else:
+        return __print_conn_hw()
+
+
+@app.route('/controller/api/v1/led', methods=['GET','POST'])
+def led():
+    if request.method == 'POST':
+        #return status of led switch_led
+        #controller/api/v1/led?number=1
+        number = request.args.get('number',type=int)
+        if number == 1:
+            return jsonify({'status': __switch_led()})
+        else:
+            #TODO: STUB
+            return jsonify({'status':'No such led'})
+    else:
+        return jsonify({'status': __led_status()})
+#TODO:
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
-
-@app.route('/controller/api/v1/led', methods=['POST'])    
-def switch_led():
-    #return status of led switch_led
-    return jsonify({'status': __switch_led()})
