@@ -110,6 +110,10 @@ def __led_status():
 #TODO:
 def __print_conn_hw():
     return 1
+
+#TODO:
+def __add_new_device(device):
+    return 1
 ## AUTH STUFF ###
 
 @auth.get_password
@@ -172,13 +176,17 @@ def get_day(day_no):
         abort(404)
     return jsonify({'day': days[day_no - 1]})
 
-@app.route('controller/api/v1/connected-hardware', methods=['GET','POST'])
+## /controller/api/v1/connected-hardware
+@app.route('/controller/api/v1/connected-hardware', methods=['GET','POST'])
 def hardware():
+
     if request.method == 'POST':
-        pass
+        # ex. controller/api/v1/connected-hardware?device=tempsensor
+        device = request.args.get('device',type=str)
+        status = __add_new_device(device)
+        return jsonify({'status':status})
     else:
         return __print_conn_hw()
-
 
 @app.route('/controller/api/v1/led', methods=['GET','POST'])
 def led():
