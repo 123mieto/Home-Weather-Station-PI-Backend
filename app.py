@@ -98,10 +98,10 @@ def __get_days():
     except sqlite3.IntegrityError:
         print('ERROR: db exists')
 
-def __switch_led():
-    print("Led will be switched ", file=sys.stderr)
-    status = 1
-    return status
+def __switch_led(state = 1):
+    #TODO: wykonaj zmiane koloru ledki
+    #TODO: stan ledki powinien byc globalny dla kazdej z podlaczonych led
+    return state
 
 def __led_status():
     print("Led status", file= sys.stderr)
@@ -147,13 +147,13 @@ def not_found(error):
 
 ## Routes
 ## /temperature/api/v1/readings  GET ALL
-@app.route('/temperature/api/v1/readings', methods=['GET'])
+@app.route('/api/v1/temperature/readings', methods=['GET'])
 #@auth.login_required
 def get_readings():
     return jsonify({'readings': __get_readings()})
 
 ## /temperature/api/v1/readings  GET ONE
-@app.route('/temperature/api/v1/readings/<int:reading_no>', methods=['GET'])
+@app.route('/api/v1/temperature/readings/<int:reading_no>', methods=['GET'])
 def get_reading(reading_no):
     reading = [reading for reading in __get_readings() if reading['number'] == reading_no]
 
@@ -162,13 +162,13 @@ def get_reading(reading_no):
     return jsonify({'reading': reading[0]})
 
 ## /temperature/api/v1/days  GET ALL
-@app.route('/temperature/api/v1/days', methods=['GET'])
+@app.route('/api/v1/temperature/days', methods=['GET'])
 #@auth.login_required
 def get_days():
     return jsonify({'days': __get_days()})
 
 ## /temperature/api/v1/days  GET ONE
-@app.route('/temperature/api/v1/days/<int:day_no>', methods=['GET'])
+@app.route('/api/v1/temperature/days/<int:day_no>', methods=['GET'])
 def get_day(day_no):
     days = __get_days()
 
@@ -177,31 +177,39 @@ def get_day(day_no):
     return jsonify({'day': days[day_no - 1]})
 
 ## /controller/api/v1/connected-hardware
-@app.route('/controller/api/v1/connected-hardware', methods=['GET','POST'])
+@app.route('/api/v1/controller/connected-hardware', methods=['GET','POST'])
 def hardware():
-
     if request.method == 'POST':
         # ex. controller/api/v1/connected-hardware?device=tempsensor
         device = request.args.get('device',type=str)
         status = __add_new_device(device)
         return jsonify({'status':status})
     else:
-        return __print_conn_hw()
+        return jsonify({'status':__print_conn_hw()})
 
-@app.route('/controller/api/v1/led', methods=['GET','POST'])
-def led():
+@app.route('/api/v1/controller/leds', methods=['GET','POST'])
+def leds():
     if request.method == 'POST':
         #return status of led switch_led
-        #controller/api/v1/led?number=1
+        #controller/api/v1/led?number=1&state=1
         number = request.args.get('number',type=int)
+        state = request.args.get('state',type=int)
+        if (state is None) or (number is None):
+            print("State or number cannot be None: ", state, number,  file= sys.stderr)
+            print ("Request url: ", request.url, file = sys.stderr)
+            abort(404)
+        if (state < 0) or (state > 1):
+            print("State cannot be more than 1. State: ", state, file= sys.stderr)
+            print ("Request url: ", request.url, file = sys.stderr)
+            abort(404)
         if number == 1:
-            return jsonify({'status': __switch_led()})
+            print ("Request url: ", request.url, file = sys.stderr)
+            return jsonify({'status': __switch_led(state)})
+            print ("Request url: ", request.url, file = sys.stderr)
         else:
-            #TODO: STUB
-            return jsonify({'status':'No such led'})
+            abort(404)
     else:
         return jsonify({'status': __led_status()})
-#TODO:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
