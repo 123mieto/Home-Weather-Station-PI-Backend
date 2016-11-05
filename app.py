@@ -1,6 +1,7 @@
 #!/usr/bin/python
 from __future__ import print_function
 from flask import Flask, jsonify, abort, make_response, request, url_for
+from DBAccessor import DBAccessor
 
 import time
 import sys
@@ -17,8 +18,6 @@ NUMBER = 0
 TIMESTAMP = 1
 TEMPERATURE = 2
 DATE = 3
-
-
 
 auth = HTTPBasicAuth()
 app = Flask(__name__)
@@ -41,8 +40,9 @@ days = [
     }
 ]
 
-sqlite_file = '../../pi/Temperature/temp_db.sqlite'
-
+#not the same folder
+#sqlite_file = '../../pi/Temperature/temp_db.sqlite'
+sqlite_file = 'temp_db.sqlite'
 
 def __get_readings(start_num = 0, len = 100):
     print("Provided readings", file=sys.stderr)
@@ -71,7 +71,7 @@ def __get_readings(start_num = 0, len = 100):
         print('ERROR: db exists')
 
 #for now it always gets last 10 days
-def __get_days():
+def __get_days_temperature():
     print("Provided days", file=sys.stderr)
     conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
@@ -97,6 +97,35 @@ def __get_days():
         return daysData
     except sqlite3.IntegrityError:
         print('ERROR: db exists')
+
+#for now it always gets last 10 days
+def __get_days_light_level():
+    print("Provided days", file=sys.stderr)
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
+    daysData = []
+
+    try:
+        for i in range(10):
+            tTemps = []
+            tTimes = []
+            date = (datetime.date.today() - datetime.timedelta(days = i)).strftime("%d.%m.%Y");
+            c.execute("SELECT {q1}, {q2} FROM {tn} WHERE {cd} = '{vd}';" \
+                .format(q1 = 'time', q2 = 'light',tn = 'light_tab', cd = 'date', vd = date))
+            results = c.fetchall()
+            if results is not None:
+                tTemps = [result[1] for result in results]
+                tTimes = [result[0] for result in results]
+            daysData.append({'number': i + 1, 'date': date, 'light': tTemps, 'times': tTimes})
+
+            #close connection to db
+        conn.commit()
+        conn.close()
+
+        return daysData
+    except sqlite3.IntegrityError:
+        print('ERROR: db exists')
+
 
 def __switch_led(state = 1):
     #TODO: wykonaj zmiane koloru ledki
@@ -161,16 +190,31 @@ def get_reading(reading_no):
         abort(404)
     return jsonify({'reading': reading[0]})
 
-## /temperature/api/v1/days  GET ALL
+## /temperature/api/v1/temperature/days  GET ALL
 @app.route('/api/v1/temperature/days', methods=['GET'])
 #@auth.login_required
-def get_days():
-    return jsonify({'days': __get_days()})
+def get_days_temp():
+    return jsonify({'days': __get_days_temperature()})
 
-## /temperature/api/v1/days  GET ONE
+## /temperature/api/v1/temperature/days  GET ONE
 @app.route('/api/v1/temperature/days/<int:day_no>', methods=['GET'])
-def get_day(day_no):
-    days = __get_days()
+def get_day_temp(day_no):
+    days = __get_days_temperature()
+
+    if len(days) == 0:
+        abort(404)
+    return jsonify({'day': days[day_no - 1]})
+
+## /temperature/api/v1/light/days  GET ALL
+@app.route('/api/v1/light/days', methods=['GET'])
+#@auth.login_required
+def get_days_light():
+    return jsonify({'days': __get_days_light_level()})
+
+## /temperature/api/v1/light/days  GET ONE
+@app.route('/api/v1/light/days/<int:day_no>', methods=['GET'])
+def get_day_light(day_no):
+    days = __get_days_light_level()
 
     if len(days) == 0:
         abort(404)
@@ -210,6 +254,10 @@ def leds():
             abort(404)
     else:
         return jsonify({'status': __led_status()})
+
+@app.route('/api/v1/log', methods=['POST'])
+def log():
+    return abort(404)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0')
