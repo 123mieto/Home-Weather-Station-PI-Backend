@@ -35,20 +35,15 @@ class DBAccessor(object):
     def __init__(self):
         conn = sqlite3.connect(sqlite_file)
         c = conn.cursor()
+
         try:
-            c.execute("DROP TABLE IF EXISTS {tn1}" \
-                .format(tn1 = table1))
-            c.execute("DROP TABLE IF EXISTS {tn2}" \
-                .format(tn2 = table2))
-            c.execute("DROP TABLE IF EXISTS {tn3}"\
-                .format(tn3 = table3))
-            c.execute("CREATE TABLE {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
+            c.execute("CREATE TABLE IF NOT EXISTS {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
                 .format(tn = table1, n1 = col1, v1 = 'INTEGER', \
                 n2 = col2, v2 = 'INTEGER', n3 = col3, v3 = 'INTEGER', n4 = col4, v4 = 'TEXT'))
-            c.execute("CREATE TABLE {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
+            c.execute("CREATE TABLE IF NOT EXISTS {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
                 .format(tn = table2, n1 = col2_1, v1 = 'INTEGER', \
                 n2 = col2_2, v2 = 'INTEGER', n3 = col2_3, v3 = 'INTEGER', n4 = col2_4, v4 = 'TEXT'))
-            c.execute("CREATE TABLE {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
+            c.execute("CREATE TABLE IF NOT EXISTS {tn} ({n1} {v1} PRIMARY KEY AUTOINCREMENT, {n2} {v2}, {n3} {v3}, {n4} {v4})" \
                 .format(tn = table3, n1 = col3_1, v1 = 'INTEGER', \
                 n2 = col3_2, v2 = 'INTEGER', n3 = col3_3, v3 = 'INTEGER', n4 = col3_4, v4 = 'TEXT'))
 
